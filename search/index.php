@@ -1,12 +1,10 @@
 <?php
-
-$database = new mysqli("127.0.0.1", "mariadb", "mariadb", "mariadb");
+$ENV = parse_ini_file(".env");
+$database = new mysqli($ENV["CONNECTION"], $ENV["USER"], $ENV["PASSWORD"],$ENV["DATABASE"]);
 
 $search = $_GET["search"] ?? "";
-
-$phones = $database->query("SELECT models.Modelname, manufacturer.Name FROM models INNER JOIN manufacturer ON models.Manufacturer=manufacturer.ID WHERE Modelname LIKE '$search%';")->fetch_all();
+$phones = $database->query("SELECT ".$ENV["TABLE_MODELS"].".modelname, ".$ENV["TABLE_MANUFACTURER"].".name FROM ".$ENV["TABLE_MODELS"]." INNER JOIN ".$ENV["TABLE_MANUFACTURER"]." ON ".$ENV["TABLE_MODELS"].".hersteller_id=".$ENV["TABLE_MANUFACTURER"].".id WHERE modelname LIKE '$search%';")->fetch_all();
 ?>
-
 <?php foreach ($phones as $phone) { ?>
     <article>
         <hgroup>

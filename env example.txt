@@ -1,0 +1,8 @@
+CONNECTION="localhost"
+USER="root"
+PASSWORD="mariadb"
+DATABASE="db"
+TABLE_MANUFACTURER="handyverkauf_hersteller"
+TABLE_MODELS="handyverkauf_modelle"
+TABLE_SOLD="handyverkauf_verkauf"
+TABLE_BESTSELLER="handyverkauf_bestseller"
