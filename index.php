@@ -12,8 +12,11 @@
 <body>
     <header class="container">
         <nav>
-            <h1>Handyverkauf</h1>
-
+            <ul>
+                <li>
+                    <h1>Smartphones</h1>
+                </li>
+            </ul>
             <ul>
                 <li>
                     <input type="search" name="search" placeholder="search..." hx-get="/search/" hx-trigger="load, input changed, search" hx-target="#search-results" hx-indicator="loading"> 
@@ -23,9 +26,9 @@
     </header>
 
     <main class="container">
-        <h1>Results: <?php echo $_GET["search"] ?? "" ?></h1>
+        <h2>Results: <?php echo $_GET["search"] ?? "" ?></h1>
 
-        <section id="search-results"></div>
+        <section id="search-results" style="display: flex; flex-wrap: wrap; justify-content: space-between;"></section>
         
         <div aria-busy="true" id="loading" class="htmx-indicator"></div>
     </main>
