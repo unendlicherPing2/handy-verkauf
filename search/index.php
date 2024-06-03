@@ -21,18 +21,16 @@ $phones = $database->query("
 ?>
 
 <?php foreach ($phones as [$name, $manufacturer, $image, $price]) { ?>
-    <article style="display: flex; width: 600px; justify-content: space-between;">
-        <img src="<?php echo $image ?>" style="width: 200px"/>
-
-        <hgroup>
-            <h3><?php echo $name ?></h3>
-            <small><?php echo $manufacturer ?></small>
-
-            <br><br>
-
-            <small class="price"><?php echo number_format($price / 100, 2) ?>€</small>
-        </hgroup>
-
-        <button hx-get="/phones/?phone=<?php echo $name?>" hx-boost="true">Details</button>
-    </article>
+    <div class="card card-side bg-base-100 shadow-xl m-">   
+        <figure><img src="<?php echo $image ?>" style="width: 100px" /></figure>
+        <div class="card-body">
+            <h2 class="card-title"><?php echo $name ?></h2>
+            <p><?php echo $manufacturer ?></p>
+            <div class="card-actions justify-end">
+                <button hx-get="/phones/?<?php echo $name ?>" hx-boost="true" class="btn btn-primary">
+                    Details
+                </button>
+            </div>
+        </div>
+    </div>
 <?php } ?>
