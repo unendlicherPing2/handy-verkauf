@@ -6,15 +6,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Shop</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2.0.6/css/pico.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2.0.6/css/pico.colors.min.css" />
     <script src="https://unpkg.com/htmx.org@1.9.12"></script>
 </head>
 
 <body>
     <header class="container">
         <nav>
-            <h1>Handyverkauf</h1>
-
             <ul>
+            <li>
+                
+                <h1><img src="Logo.png" alt="" style="height:64px">Handyverkauf</h1>
+                </li>
+            </ul>
+            <ul>
+                
                 <li>
                     <input type="search" name="search" placeholder="search..." hx-get="/search/" hx-trigger="load, input changed, search" hx-target="#search-results" hx-indicator="loading"> 
                 </li>
