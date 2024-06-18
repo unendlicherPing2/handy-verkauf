@@ -4,7 +4,10 @@ require("../database.php");
 
 $search = $_GET["search"] ?? "";
 
-$phones = db\search_phones($search)
+$phones = match ($search) {
+    "" => db\bestsellers(),
+    default => db\search_phones($search)
+};
 
 ?>
 
@@ -15,9 +18,9 @@ $phones = db\search_phones($search)
             <h2 class="card-title"><?php echo $name ?></h2>
             <p><?php echo $manufacturer ?></p>
             <div class="card-actions justify-end">
-                <button hx-get="./phones/?phone=<?php echo $id ?>" hx-boost="true" class="btn btn-primary">
+                <a href="./phones/?phone=<?php echo $id ?>" class="btn btn-primary">
                     Details
-                </button>
+                </a>
             </div>
         </div>
     </div>

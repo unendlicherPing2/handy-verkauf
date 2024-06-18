@@ -4,7 +4,7 @@ require("../database.php");
 
 $phone = $_GET["phone"] ?? "";
 
-[$id, $name, $manufacturer, $image, $price] = db\get_phone($phone);
+[$name, $manufacturer, $image, $price] = db\get_phone($phone);
 
 ?>
 
@@ -21,27 +21,23 @@ $phone = $_GET["phone"] ?? "";
 </head>
 
 <body>
-    <form hx-post="." class="flex justify-center items-center h-screen">
+    <form hx-post="./buy.php" hx-swap="outerHTML" class="flex justify-center items-center h-screen">
+        <input type="hidden" name="phone" value="<?php echo $phone ?>">
+
         <div class="modal-box modal-bottom">
             <grid class="flex items-center gap-2 m-4">
-                <input type="text" class="input input-bordered" placeholder="Forename" />
-                <input type="text" class="input input-bordered" placeholder="Surname" />
+                <input type="text" class="input input-bordered" placeholder="Forename" name="forename" required />
+                <input type="text" class="input input-bordered" placeholder="Surname" name="surname" required />
             </grid>
 
             <label class="input input-bordered flex items-center gap-2 m-4">
-                <input type="text" class="grow" placeholder="Email" />
+                <input type="text" class="grow" placeholder="Email" name="email" required />
             </label>
             <span></span>
             <label class="input input-bordered flex items-center gap-2 m-4">
-                <input type="text" class="grow" placeholder="Address" />
+                <input type="text" class="grow" placeholder="Address" name="address" required />
             </label>
 
-            <div class="form-control flex items-center gap-2 m-4">
-                <label class="label cursor-pointer">
-                    <input type="checkbox" class="checkbox checkbox-primary mx-4" />
-                    <span class="label-text">Create an account?</span>
-                </label>
-            </div>
         </div>
         <div class="modal-box modal-bottom">
             <h1>Price: <?php echo number_format($price / 100, 2) . "€" ?></h1>

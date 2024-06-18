@@ -3,9 +3,7 @@ require("../database.php");
 
 $phone = $_GET["phone"] ?? "";
 
-header("HX-Redirect: /phones/?phone=$phone");
-
-[$id, $name, $manufacturer, $image, $price] = db\get_phone($phone)
+[$name, $manufacturer, $image, $price] = db\get_phone($phone)
 
 ?>
 
@@ -29,7 +27,7 @@ header("HX-Redirect: /phones/?phone=$phone");
 
     <img src="<?php echo $image ?>">
 
-    <a href="../buy/?phone=<?php echo $id ?>" class="btn btn-primary">Buy now!</a>
+    <a href="../buy/?phone=<?php echo $phone ?>" class="btn btn-primary">Buy now!</a>
 </body>
 
 </html>
