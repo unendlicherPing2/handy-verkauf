@@ -27,7 +27,9 @@ if ($_SESSION["login"] ?? false) {
 </head>
 
 <form method="post">
-    <input type="text" name="username" required>
-    <input type="password" name="password" required>
+    <fieldset>
+        <input type="text" name="username" required>
+        <input type="password" name="password" required>
+    </fieldset>
     <button type="submit">Login</button>
 </form>

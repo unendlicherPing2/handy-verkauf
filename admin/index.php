@@ -32,11 +32,11 @@ $recent_orders = db\recent_orders($max);
     <table>
         <thead>
             <tr>
-                <td>Model</td>
-                <td>Manufacturer</td>
-                <td>Price</td>
-                <td>Stock</td>
-                <td>Sold</td>
+                <th>Model</th>
+                <th>Manufacturer</th>
+                <th>Price</th>
+                <th>Stock</th>
+                <th>Sold</th>
             </tr>
         </thead>
         <tbody>
