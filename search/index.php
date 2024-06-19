@@ -4,10 +4,7 @@ require("../database.php");
 
 $search = $_GET["search"] ?? "";
 
-$phones = match ($search) {
-    "" => db\bestsellers(),
-    default => db\search_phones($search)
-};
+$phones = db\search_phones($search);
 
 ?>
 
