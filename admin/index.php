@@ -11,6 +11,7 @@ if (!($_SESSION["login"] ?? false)) {
 
 $max = $_GET["max"] ?? 5;
 
+$manufacturers = db\get_manufacturers();
 $phones = db\bestsellers();
 $recent_orders = db\recent_orders($max);
 
@@ -29,6 +30,24 @@ $recent_orders = db\recent_orders($max);
 
     <h2>Models</h2>
 
+    <form method="post">
+        <fieldset>
+            <input type="text" name="modelname" placeholder="modelname">
+            <input type="text" name="manufacturer" placeholder="manufacturer" list="manufacturers">
+            <input type="number" name="storage" placeholder="storage">
+            <input type="number" name="price" placeholder="price">
+            <input type="number" name="stock" placeholder="stock">
+            <input type="url" name="image" placeholder="image">
+
+            <datalist id="manufacturers">
+                <?php foreach ($manufacturers as $manufacturer) { ?>
+                    <option value="<?php echo $manufacturer; ?>" />
+                <?php } ?>
+            </datalist>
+        </fieldset>
+        <button type="submit">Add</button>
+    </form>
+
     <table>
         <thead>
             <tr>
@@ -37,6 +56,8 @@ $recent_orders = db\recent_orders($max);
                 <th>Price</th>
                 <th>Stock</th>
                 <th>Sold</th>
+                <th></th>
+                <th></th>
             </tr>
         </thead>
         <tbody>
@@ -47,6 +68,22 @@ $recent_orders = db\recent_orders($max);
                     <td><?php echo number_format($price / 100, 2); ?>€</td>
                     <td><?php echo $stock; ?></td>
                     <td><?php echo $sold; ?></td>
+                    <td>
+                        <form method="POST">
+                            <input type="hidden" name="max" value="<?php echo $max ?>">
+                            <input type="hidden" name="action" value="update">
+                            <input type="hidden" name="model" value="<?php echo $id ?>">
+                            <button type="submit">Update</button>
+                        </form>
+                    </td>
+                    <td>
+                        <form method="POST">
+                            <input type="hidden" name="max" value="<?php echo $max ?>">
+                            <input type="hidden" name="action" value="delete">
+                            <input type="hidden" name="model" value="<?php echo $id ?>">
+                            <button type="submit">Delete</button>
+                        </form>
+                    </td>
                 </tr>
             <?php } ?>
         </tbody>

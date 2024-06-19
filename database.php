@@ -42,6 +42,13 @@ namespace db {
         return $query->get_result()->fetch_row();
     }
 
+    function get_manufacturers() {
+        global $database, $tables;
+
+        $result = $database->query("SELECT Name FROM {$tables["MANUFACTURER"]};");
+        return array_map(fn($e) => $e[0], $result->fetch_all());
+    }
+
     /**
      * Searches based on the model name and sorts the results by how much they got sold. (bestseller list)
      */
@@ -134,11 +141,11 @@ namespace db {
         return $database->query(
             "SELECT
                 {$tables["MODELS"]}.ID,
+                {$tables["MODELS"]}.Name,
                 {$tables["MANUFACTURER"]}.Name,
                 {$tables["MODELS"]}.Image,
                 {$tables["PRICES"]}.Price,
                 {$tables["MODELS"]}.Stock,
-                {$tables["MODELS"]}.Name,
                 COUNT({$tables["SOLD"]}.ID)
             FROM
                 {$tables["SOLD"]}
