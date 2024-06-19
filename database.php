@@ -42,11 +42,12 @@ namespace db {
         return $query->get_result()->fetch_row();
     }
 
-    function get_manufacturers() {
+    function get_manufacturers()
+    {
         global $database, $tables;
 
         $result = $database->query("SELECT Name FROM {$tables["MANUFACTURER"]};");
-        return array_map(fn($e) => $e[0], $result->fetch_all());
+        return array_map(fn ($e) => $e[0], $result->fetch_all());
     }
 
     /**
@@ -84,7 +85,8 @@ namespace db {
                 {$tables["SOLD"]}.Model
             ORDER BY
 	            COUNT({$tables["SOLD"]}.ID) DESC
-        ")->fetch_all();
+        "
+        )->fetch_all();
     }
 
     function buy_phone(String $phone, String $forename, String $surname, String $email, String $address): bool
@@ -172,7 +174,8 @@ namespace db {
         )->fetch_all();
     }
 
-    function recent_orders(Int $max) {
+    function recent_orders(Int $max)
+    {
         global $database, $tables;
 
         return $database->query(
@@ -185,6 +188,45 @@ namespace db {
             ORDER BY
                 {$tables["SOLD"]}.Timestamp
             LIMIT $max
-        ")->fetch_all();
+        "
+        )->fetch_all();
+    }
+
+    function add_phone($modelname,  $manufacturer, $storage, $price, $stock, $image)
+    {
+        global $database, $tables;
+
+        $result = $database->query(
+            "SELECT ID FROM {$tables["MANUFACTURER"]} 
+                WHERE Name = '$manufacturer';
+            "
+        );
+
+        $manufacturer = match ($result->num_rows) {
+            0 => $database->query(
+                "INSERT INTO {$tables["MANUFACTURER"]} (Name)
+                    VALUES ($manufacturer);
+                 SELECT LAST_INSERT_ID(); 
+                "
+            )->fetch_row()[0],
+            default => $result->fetch_row()[0]
+        };
+
+        $model = $database->query(
+            "INSERT INTO {$tables["MODELS"]} 
+                (Name, Manufacturer, Storage, Image, Stock)
+                VALUES ('$modelname', $manufacturer, $storage, '$image', $stock);
+                SELECT LAST_INSERT_ID(); 
+                "
+        )->fetch_row()[0];
+
+        $price *= 100;
+        $price = $database->query(
+            "INSERT INTO {$tables["PRICES"]}
+                (Price, Model)
+                VALUES ($price, $model);
+                SELECT LAST_INSERT_ID(); 
+        "
+        )->fetch_row()[0];
     }
 }

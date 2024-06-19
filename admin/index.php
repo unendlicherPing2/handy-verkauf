@@ -15,6 +15,50 @@ $manufacturers = db\get_manufacturers();
 $phones = db\bestsellers();
 $recent_orders = db\recent_orders($max);
 
+$action = $_POST["action"] ?? "add";
+
+function handle_add()
+{
+    global $action;
+
+    $modelname = $_POST["modelname"] ?? "";
+    $manufacturer = $_POST["manufacturer"] ?? "";
+    $storage = $_POST["storage"] ?? 0;
+    $price = $_POST["price"] ?? 0;
+    $stock = $_POST["stock"] ?? 0;
+    $image = $_POST["image"] ?? "";
+    
+    db\add_phone($modelname,  $manufacturer, $storage, $price, $stock, $image);
+
+    $action = "add";
+
+    header("Location: .");
+    exit();
+}
+
+function handle_doupdate()
+{
+    global $action;
+
+    $action = "add";
+}
+
+function handle_update()
+{
+    global $action, $modelname, $manufacturer, $storage, $price, $stock, $image;
+
+    $model = $_POST["model"];
+    $action = "update";
+}
+
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    match ($action) {
+        "add" => handle_add(),
+        "doupdate" => handle_doupdate(),
+        "update" => handle_update(),
+    };
+}
+
 ?>
 
 <head>
@@ -31,13 +75,15 @@ $recent_orders = db\recent_orders($max);
     <h2>Models</h2>
 
     <form method="post">
+        <input type="hidden" name="action" value="<?php echo $action; ?>">
+
         <fieldset>
-            <input type="text" name="modelname" placeholder="modelname">
-            <input type="text" name="manufacturer" placeholder="manufacturer" list="manufacturers">
-            <input type="number" name="storage" placeholder="storage">
-            <input type="number" name="price" placeholder="price">
-            <input type="number" name="stock" placeholder="stock">
-            <input type="url" name="image" placeholder="image">
+            <input type="text" name="modelname" placeholder="modelname" required>
+            <input type="text" name="manufacturer" placeholder="manufacturer" list="manufacturers" required>
+            <input type="number" name="storage" placeholder="storage" required>
+            <input type="number" name="price" placeholder="price" required>
+            <input type="number" name="stock" placeholder="stock" required>
+            <input type="url" name="image" placeholder="image" required>
 
             <datalist id="manufacturers">
                 <?php foreach ($manufacturers as $manufacturer) { ?>
@@ -45,7 +91,7 @@ $recent_orders = db\recent_orders($max);
                 <?php } ?>
             </datalist>
         </fieldset>
-        <button type="submit">Add</button>
+        <button type="submit"><?php echo $action; ?></button>
     </form>
 
     <table>
@@ -56,7 +102,6 @@ $recent_orders = db\recent_orders($max);
                 <th>Price</th>
                 <th>Stock</th>
                 <th>Sold</th>
-                <th></th>
                 <th></th>
             </tr>
         </thead>
@@ -70,18 +115,9 @@ $recent_orders = db\recent_orders($max);
                     <td><?php echo $sold; ?></td>
                     <td>
                         <form method="POST">
-                            <input type="hidden" name="max" value="<?php echo $max ?>">
                             <input type="hidden" name="action" value="update">
                             <input type="hidden" name="model" value="<?php echo $id ?>">
                             <button type="submit">Update</button>
-                        </form>
-                    </td>
-                    <td>
-                        <form method="POST">
-                            <input type="hidden" name="max" value="<?php echo $max ?>">
-                            <input type="hidden" name="action" value="delete">
-                            <input type="hidden" name="model" value="<?php echo $id ?>">
-                            <button type="submit">Delete</button>
                         </form>
                     </td>
                 </tr>
