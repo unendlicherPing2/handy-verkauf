@@ -1,0 +1,9 @@
+<Files ".env">
+    Order deny,allow
+    Deny from all
+</Files>
+
+<Files ".env.template">
+    Order deny,allow
+    Deny from all
+</Files>

@@ -4,9 +4,11 @@ namespace db {
 
     use mysqli;
 
-    $env = parse_ini_file(".env");
+    $env = parse_ini_file(".env", true);
+    $db_login = $env["DATABASE"];
+    $tables = $env["DATABASE.TABLES"];
 
-    $database = new mysqli($env["IP"], $env["USER"], $env["PASSWORD"], $env["DATABASE"]);
+    $database = new mysqli($db_login["IP"], $db_login["USER"], $db_login["PASSWORD"], $db_login["DATABASE"]);
 
     if ($database->connect_errno) {
         echo "An internal error occured!";
@@ -15,23 +17,23 @@ namespace db {
 
     function get_phone(String $phone)
     {
-        global $database, $env;
+        global $database, $tables;
 
         $phone = $database->real_escape_string($phone);
 
         $query = $database->prepare("
             SELECT
-                {$env["TABLE_MODELS"]}.Name,
-                {$env["TABLE_MANUFACTURER"]}.Name,
-                {$env["TABLE_MODELS"]}.Image,
-                {$env["TABLE_PRICES"]}.Price
+                {$tables["MODELS"]}.Name,
+                {$tables["MANUFACTURER"]}.Name,
+                {$tables["MODELS"]}.Image,
+                {$tables["PRICES"]}.Price
             FROM
-                {$env["TABLE_MODELS"]}
-            LEFT JOIN {$env["TABLE_MANUFACTURER"]} ON {$env["TABLE_MODELS"]}.Manufacturer = {$env["TABLE_MANUFACTURER"]}.ID
-            LEFT JOIN {$env["TABLE_PRICES"]} ON {$env["TABLE_PRICES"]}.model = {$env["TABLE_MODELS"]}.ID
-            WHERE {$env["TABLE_MODELS"]}.ID = ?
+                {$tables["MODELS"]}
+            LEFT JOIN {$tables["MANUFACTURER"]} ON {$tables["MODELS"]}.Manufacturer = {$tables["MANUFACTURER"]}.ID
+            LEFT JOIN {$tables["PRICES"]} ON {$tables["PRICES"]}.model = {$tables["MODELS"]}.ID
+            WHERE {$tables["MODELS"]}.ID = ?
             ORDER BY
-                {$env["TABLE_PRICES"]}.Timestamp
+                {$tables["PRICES"]}.Timestamp
             DESC
             LIMIT 1
         ");
@@ -45,42 +47,42 @@ namespace db {
      */
     function search_phones(String $query)
     {
-        global $database, $env;
+        global $database, $tables;
 
         $query = $database->real_escape_string($query);
 
         return $database->query(
             "SELECT
-                {$env["TABLE_MODELS"]}.ID,
-                {$env["TABLE_MODELS"]}.Name,
-                {$env["TABLE_MANUFACTURER"]}.Name,
-                {$env["TABLE_MODELS"]}.Image,
-                {$env["TABLE_PRICES"]}.Price
+                {$tables["MODELS"]}.ID,
+                {$tables["MODELS"]}.Name,
+                {$tables["MANUFACTURER"]}.Name,
+                {$tables["MODELS"]}.Image,
+                {$tables["PRICES"]}.Price
             FROM
-                {$env["TABLE_SOLD"]}
-            LEFT JOIN {$env["TABLE_MODELS"]} ON 
-                {$env["TABLE_SOLD"]}.Model = {$env["TABLE_MODELS"]}.ID
-            LEFT JOIN {$env["TABLE_MANUFACTURER"]} ON {$env["TABLE_MODELS"]}.Manufacturer = {$env["TABLE_MANUFACTURER"]}.ID
-            LEFT JOIN {$env["TABLE_PRICES"]} ON {$env["TABLE_PRICES"]}.Model = {$env["TABLE_MODELS"]}.ID
+                {$tables["SOLD"]}
+            LEFT JOIN {$tables["MODELS"]} ON 
+                {$tables["SOLD"]}.Model = {$tables["MODELS"]}.ID
+            LEFT JOIN {$tables["MANUFACTURER"]} ON {$tables["MODELS"]}.Manufacturer = {$tables["MANUFACTURER"]}.ID
+            LEFT JOIN {$tables["PRICES"]} ON {$tables["PRICES"]}.Model = {$tables["MODELS"]}.ID
             WHERE
-                {$env["TABLE_MODELS"]}.Name LIKE '$query%' AND NOT EXISTS(
+                {$tables["MODELS"]}.Name LIKE '$query%' AND NOT EXISTS(
                 SELECT
                     1
                 FROM
-                    {$env["TABLE_PRICES"]} Other
+                    {$tables["PRICES"]} Other
                 WHERE
-                    {$env["TABLE_PRICES"]}.model = Other.model AND {$env["TABLE_PRICES"]}.Timestamp < Other.Timestamp
+                    {$tables["PRICES"]}.model = Other.model AND {$tables["PRICES"]}.Timestamp < Other.Timestamp
             )
             GROUP BY
-                {$env["TABLE_SOLD"]}.Model
+                {$tables["SOLD"]}.Model
             ORDER BY
-	            COUNT({$env["TABLE_SOLD"]}.ID) DESC
+	            COUNT({$tables["SOLD"]}.ID) DESC
         ")->fetch_all();
     }
 
     function buy_phone(String $phone, String $forename, String $surname, String $email, String $address): bool
     {
-        global $database, $env;
+        global $database, $tables;
 
         $phone = $database->real_escape_string($phone);
         $forename = $database->real_escape_string($forename);
@@ -88,7 +90,7 @@ namespace db {
         $email = $database->real_escape_string($email);
         $address = $database->real_escape_string($address);
 
-        $query = $database->prepare("SELECT {$env["TABLE_MODELS"]}.Stock FROM {$env["TABLE_MODELS"]} WHERE {$env["TABLE_MODELS"]}.ID = ?;");
+        $query = $database->prepare("SELECT {$tables["MODELS"]}.Stock FROM {$tables["MODELS"]} WHERE {$tables["MODELS"]}.ID = ?;");
         $query->bind_param("i", $phone);
         $query->execute();
 
@@ -97,12 +99,12 @@ namespace db {
         }
 
         $query = $database->prepare("
-        INSERT INTO {$env["TABLE_SOLD"]} (
-            {$env["TABLE_SOLD"]}.Model,
-            {$env["TABLE_SOLD"]}.Forename,
-            {$env["TABLE_SOLD"]}.Surname,
-            {$env["TABLE_SOLD"]}.EMail,
-            {$env["TABLE_SOLD"]}.Address
+        INSERT INTO {$tables["SOLD"]} (
+            {$tables["SOLD"]}.Model,
+            {$tables["SOLD"]}.Forename,
+            {$tables["SOLD"]}.Surname,
+            {$tables["SOLD"]}.EMail,
+            {$tables["SOLD"]}.Address
         )
         VALUES(
             ?,
@@ -116,9 +118,9 @@ namespace db {
         $query->execute();
 
         $database->query(
-            "UPDATE {$env["TABLE_MODELS"]} 
-                SET {$env["TABLE_MODELS"]}.Stock = {$env["TABLE_MODELS"]}.Stock - 1 
-                WHERE {$env["TABLE_MODELS"]}.ID = $phone;
+            "UPDATE {$tables["MODELS"]} 
+                SET {$tables["MODELS"]}.Stock = {$tables["MODELS"]}.Stock - 1 
+                WHERE {$tables["MODELS"]}.ID = $phone;
         "
         );
 
@@ -127,54 +129,54 @@ namespace db {
 
     function bestsellers()
     {
-        global $database, $env;
+        global $database, $tables;
 
         return $database->query(
             "SELECT
-                {$env["TABLE_MODELS"]}.ID,
-                {$env["TABLE_MODELS"]}.Name,
-                {$env["TABLE_MANUFACTURER"]}.Name,
-                {$env["TABLE_MODELS"]}.Image,
-                {$env["TABLE_PRICES"]}.Price,
-                {$env["TABLE_MODELS"]}.Stock,
-                COUNT({$env["TABLE_SOLD"]}.ID)
+                {$tables["MODELS"]}.ID,
+                {$tables["MANUFACTURER"]}.Name,
+                {$tables["MODELS"]}.Image,
+                {$tables["PRICES"]}.Price,
+                {$tables["MODELS"]}.Stock,
+                {$tables["MODELS"]}.Name,
+                COUNT({$tables["SOLD"]}.ID)
             FROM
-                {$env["TABLE_SOLD"]}
-            LEFT JOIN {$env["TABLE_MODELS"]} ON 
-                {$env["TABLE_SOLD"]}.Model = {$env["TABLE_MODELS"]}.ID
-            LEFT JOIN {$env["TABLE_MANUFACTURER"]} ON
-                {$env["TABLE_MODELS"]}.Manufacturer = {$env["TABLE_MANUFACTURER"]}.ID
-            LEFT JOIN {$env["TABLE_PRICES"]} ON
-                {$env["TABLE_PRICES"]}.Model = {$env["TABLE_MODELS"]}.ID
+                {$tables["SOLD"]}
+            LEFT JOIN {$tables["MODELS"]} ON 
+                {$tables["SOLD"]}.Model = {$tables["MODELS"]}.ID
+            LEFT JOIN {$tables["MANUFACTURER"]} ON
+                {$tables["MODELS"]}.Manufacturer = {$tables["MANUFACTURER"]}.ID
+            LEFT JOIN {$tables["PRICES"]} ON
+                {$tables["PRICES"]}.Model = {$tables["MODELS"]}.ID
             WHERE
                 NOT EXISTS(
                 SELECT
                     1
                 FROM
-                    {$env["TABLE_PRICES"]} Other
+                    {$tables["PRICES"]} Other
                 WHERE
-                    {$env["TABLE_PRICES"]}.Model = Other.Model AND
-                    {$env["TABLE_PRICES"]}.Timestamp < Other.Timestamp
+                    {$tables["PRICES"]}.Model = Other.Model AND
+                    {$tables["PRICES"]}.Timestamp < Other.Timestamp
             )
             GROUP BY
-                {$env["TABLE_SOLD"]}.Model
+                {$tables["SOLD"]}.Model
             ORDER BY
-	            COUNT({$env["TABLE_SOLD"]}.ID) DESC"
+	            COUNT({$tables["SOLD"]}.ID) DESC"
         )->fetch_all();
     }
 
     function recent_orders(Int $max) {
-        global $database, $env;
+        global $database, $tables;
 
         return $database->query(
             "SELECT
-                {$env["TABLE_MODELS"]}.Name
+                {$tables["MODELS"]}.Name
             FROM
-                {$env["TABLE_SOLD"]}
-            LEFT JOIN {$env["TABLE_MODELS"]} ON
-                {$env["TABLE_SOLD"]}.Model = {$env["TABLE_MODELS"]}.ID
+                {$tables["SOLD"]}
+            LEFT JOIN {$tables["MODELS"]} ON
+                {$tables["SOLD"]}.Model = {$tables["MODELS"]}.ID
             ORDER BY
-                {$env["TABLE_SOLD"]}.Timestamp
+                {$tables["SOLD"]}.Timestamp
             LIMIT $max
         ")->fetch_all();
     }

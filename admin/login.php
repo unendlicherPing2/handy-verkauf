@@ -2,17 +2,19 @@
 
 session_start();
 
+$env = parse_ini_file("../.env", true);
+
+$hash = $env["ADMIN"]["HASH"];
+$salt = $env["ADMIN"]["SALT"];
+
 $username = $_POST["username"] ?? "";
 $password = $_POST["password"] ?? "";
-$env = parse_ini_file("../.env");
+$login = hash("sha256", $username . $password . $salt);
 
-if ($_SERVER["REQUEST_METHOD"] == "POST" 
-    && $username == $env["ADMIN_USER"] 
-    && $password == $env["ADMIN_PASSWORD"]) {
-    $_SESSION["login"] = true;
-}
+$_SESSION["login"] = $_SERVER["REQUEST_METHOD"] == "POST"
+                  && $login                     == $hash;
 
-if ($_SESSION["login"] ?? false) {
+if ($_SESSION["login"]) {
     header("Location: ../admin/");
     exit();
 }
