@@ -26,7 +26,9 @@ namespace db {
                 {$tables["MODELS"]}.Name,
                 {$tables["MANUFACTURER"]}.Name,
                 {$tables["MODELS"]}.Image,
-                {$tables["PRICES"]}.Price
+                {$tables["PRICES"]}.Price,
+                {$tables["MODELS"]}.Storage,
+                {$tables["MODELS"]}.Stock
             FROM
                 {$tables["MODELS"]}
             LEFT JOIN {$tables["MANUFACTURER"]} ON {$tables["MODELS"]}.Manufacturer = {$tables["MANUFACTURER"]}.ID
@@ -148,7 +150,7 @@ namespace db {
                 {$tables["MODELS"]}.Image,
                 {$tables["PRICES"]}.Price,
                 {$tables["MODELS"]}.Stock,
-                COUNT({$tables["SOLD"]}.ID)
+                COUNT({$tables["SOLD"]}.ID) - 1
             FROM
                 {$tables["SOLD"]}
             LEFT JOIN {$tables["MODELS"]} ON 
@@ -157,16 +159,6 @@ namespace db {
                 {$tables["MODELS"]}.Manufacturer = {$tables["MANUFACTURER"]}.ID
             LEFT JOIN {$tables["PRICES"]} ON
                 {$tables["PRICES"]}.Model = {$tables["MODELS"]}.ID
-            WHERE
-                NOT EXISTS(
-                SELECT
-                    1
-                FROM
-                    {$tables["PRICES"]} Other
-                WHERE
-                    {$tables["PRICES"]}.Model = Other.Model AND
-                    {$tables["PRICES"]}.Timestamp < Other.Timestamp
-            )
             GROUP BY
                 {$tables["SOLD"]}.Model
             ORDER BY
@@ -186,7 +178,7 @@ namespace db {
             LEFT JOIN {$tables["MODELS"]} ON
                 {$tables["SOLD"]}.Model = {$tables["MODELS"]}.ID
             ORDER BY
-                {$tables["SOLD"]}.Timestamp
+                {$tables["SOLD"]}.Timestamp DESC
             LIMIT $max
         "
         )->fetch_all();
@@ -202,22 +194,28 @@ namespace db {
             "
         );
 
-        $manufacturer = match ($result->num_rows) {
-            0 => $database->query(
+        if ($result->num_rows == 0) {
+            $database->query(
                 "INSERT INTO {$tables["MANUFACTURER"]} (Name)
-                    VALUES ($manufacturer);
-                 SELECT LAST_INSERT_ID(); 
-                "
-            )->fetch_row()[0],
+                    VALUES ($manufacturer);"
+            );
+
+            $result = $database->query("SELECT LAST_INSERTED_ID()");
+        }
+
+        $manufacturer = match ($result->num_rows) {
+            0 => $result->fetch_row()[0],
             default => $result->fetch_row()[0]
         };
 
-        $model = $database->query(
+        $stock += 1;
+        $database->query(
             "INSERT INTO {$tables["MODELS"]} 
                 (Name, Manufacturer, Storage, Image, Stock)
-                VALUES ('$modelname', $manufacturer, $storage, '$image', $stock);
-                SELECT LAST_INSERT_ID(); 
-                "
+                VALUES ('$modelname', $manufacturer, $storage, '$image', $stock);"
+        );
+        $model = $database->query(
+            "SELECT LAST_INSERT_ID();"
         )->fetch_row()[0];
 
         $price *= 100;
@@ -225,8 +223,51 @@ namespace db {
             "INSERT INTO {$tables["PRICES"]}
                 (Price, Model)
                 VALUES ($price, $model);
-                SELECT LAST_INSERT_ID(); 
         "
-        )->fetch_row()[0];
+        );
+
+        buy_phone($model, "dummy", "dummy", "dummy", "dummy");
+    }
+
+    function update_model(
+        $id,
+        $modelname,
+        $manufacturer,
+        $storage,
+        $price,
+        $stock,
+        $image
+    ) {
+        global $database, $tables;
+
+        $result = $database->query(
+            "SELECT ID FROM {$tables["MANUFACTURER"]} 
+                WHERE Name = '$manufacturer';
+            "
+        );
+
+        if ($result->num_rows == 0) {
+            $database->query(
+                "INSERT INTO {$tables["MANUFACTURER"]} (Name)
+                    VALUES ($manufacturer);"
+            );
+
+            $result = $database->query("SELECT LAST_INSERTED_ID()");
+        }
+
+        $manufacturer = match ($result->num_rows) {
+            0 => $result->fetch_row()[0],
+            default => $result->fetch_row()[0]
+        };
+
+        $database->execute_query(
+            "UPDATE {$tables["MODELS"]} 
+             SET Name = ?, Manufacturer = ?, Storage = ?, Image = ?, Stock = ? WHERE ID = ?
+             ",
+            [$modelname, $manufacturer, $storage, $image, $stock, $id]
+        );
+
+        $price *= 100;
+        $database->query("INSERT INTO {$tables["PRICES"]} (Price, Model) VALUES ($price, $id);");
     }
 }

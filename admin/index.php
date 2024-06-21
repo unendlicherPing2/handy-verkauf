@@ -17,6 +17,8 @@ $recent_orders = db\recent_orders($max);
 
 $action = $_POST["action"] ?? "add";
 
+[$modelname, $manufacturer, $storage, $price, $stock, $image, $id] = ["", "", "", "", "", "", ""];
+
 function handle_add()
 {
     global $action;
@@ -27,7 +29,7 @@ function handle_add()
     $price = $_POST["price"] ?? 0;
     $stock = $_POST["stock"] ?? 0;
     $image = $_POST["image"] ?? "";
-    
+
     db\add_phone($modelname,  $manufacturer, $storage, $price, $stock, $image);
 
     $action = "add";
@@ -36,26 +38,39 @@ function handle_add()
     exit();
 }
 
-function handle_doupdate()
+function handle_update()
 {
     global $action;
+
+    $id = $_POST["model"] ?? -1;
+    $modelname = $_POST["modelname"] ?? "";
+    $manufacturer = $_POST["manufacturer"] ?? "";
+    $storage = $_POST["storage"] ?? 0;
+    $price = $_POST["price"] ?? 0;
+    $stock = $_POST["stock"] ?? 0;
+    $image = $_POST["image"] ?? "";
+
+    db\update_model($id, $modelname, $manufacturer, $storage, $price, $stock, $image);
 
     $action = "add";
 }
 
-function handle_update()
+function handle_preupdate()
 {
-    global $action, $modelname, $manufacturer, $storage, $price, $stock, $image;
+    global $action, $modelname, $manufacturer, $storage, $price, $stock, $image, $id;
 
-    $model = $_POST["model"];
+    $id = $_POST["model"];
+
+    [$modelname, $manufacturer, $image, $price, $storage, $stock] = db\get_phone($id);
+
     $action = "update";
 }
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     match ($action) {
         "add" => handle_add(),
-        "doupdate" => handle_doupdate(),
         "update" => handle_update(),
+        "preupdate" => handle_preupdate(),
     };
 }
 
@@ -76,14 +91,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     <form method="post">
         <input type="hidden" name="action" value="<?php echo $action; ?>">
+        <input type="hidden" name="model" value="<?php echo $id; ?>">
 
         <fieldset>
-            <input type="text" name="modelname" placeholder="modelname" required>
-            <input type="text" name="manufacturer" placeholder="manufacturer" list="manufacturers" required>
-            <input type="number" name="storage" placeholder="storage" required>
-            <input type="number" name="price" placeholder="price" required>
-            <input type="number" name="stock" placeholder="stock" required>
-            <input type="url" name="image" placeholder="image" required>
+            <input type="text" name="modelname" placeholder="modelname" value="<?php echo $modelname ?>" required>
+            <input type="text" name="manufacturer" placeholder="manufacturer" list="manufacturers" value="<?php echo $manufacturer ?>" required>
+            <input type="number" name="storage" placeholder="storage" value="<?php echo $storage ?>" required>
+            <input type="number" name="price" placeholder="price" value="<?php echo $price ?>" required>
+            <input type="number" name="stock" placeholder="stock" value="<?php echo $stock ?>" required>
+            <input type="url" name="image" placeholder="image" value="<?php echo $image ?>" required>
 
             <datalist id="manufacturers">
                 <?php foreach ($manufacturers as $manufacturer) { ?>
@@ -115,7 +131,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     <td><?php echo $sold; ?></td>
                     <td>
                         <form method="POST">
-                            <input type="hidden" name="action" value="update">
+                            <input type="hidden" name="action" value="preupdate">
                             <input type="hidden" name="model" value="<?php echo $id ?>">
                             <button type="submit">Update</button>
                         </form>
